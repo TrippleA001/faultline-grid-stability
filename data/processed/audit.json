@@ -1,0 +1,473 @@
+{
+  "files": 56,
+  "rows": 5712,
+  "scenarios": 56,
+  "issues": [
+    {
+      "key": "headers",
+      "title": "Inconsistent column headers",
+      "detail": "Headers mix spacing and spelling ('BUS 26LOAD Q', 'BUS29LOADQ', 'ARA 4 CONDITION', 'SHEDDING AT BUS 20P2'). All 56 files share the same layout, so columns are mapped by position, and every position is checked against the bus or area number in its header.",
+      "action": "Mapped to canonical names (v_25, lsf_25, shed_p_25, area_1, ...).",
+      "severity": "low",
+      "affected": {}
+    },
+    {
+      "key": "encoding",
+      "title": "Stray encoding characters in numeric cells",
+      "detail": "21,528 cells carry a trailing '\u00c2' (a non-breaking space saved as UTF-8 and re-read as cp1252), which turns numbers into text.",
+      "action": "Stripped before numeric conversion.",
+      "severity": "low",
+      "affected": {
+        "cells": 21528
+      }
+    },
+    {
+      "key": "time_grid",
+      "title": "Gaps in the time grid",
+      "detail": "Each file has 102 rows on a 0.02 s grid that should have 105; t = 0.34, 0.56, 1.44 s are absent in every file. All gaps fall before the fault, where the system is in steady state, so nothing is lost.",
+      "action": "Left as recorded.",
+      "severity": "low",
+      "affected": {
+        "missing_t": [
+          0.34,
+          0.56,
+          1.44
+        ]
+      }
+    },
+    {
+      "key": "fill_series",
+      "title": "Spreadsheet fill-series artefact in BUS 28 LSF",
+      "detail": "Before the fault every quantity should sit at its steady-state value, but BUS 28 LSF counts upward 0.00005, 1.00005, 2.00005, ... row by row: the signature of an Excel drag that incremented instead of copying. It also makes every pre-fault row unique, which hides how little information the pre-fault period carries.",
+      "action": "Reset to the base-case value 0.00005 for all pre-fault rows.",
+      "severity": "high",
+      "affected": {
+        "sims": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56
+        ]
+      }
+    },
+    {
+      "key": "drift_shed_q_21",
+      "title": "Pre-fault value out of place in shed_q_21",
+      "detail": "shed_q_21 departs from its steady-state value before the fault in 53 simulation(s) (for example 115 instead of 0.0015). It looks like a value pasted into the wrong column.",
+      "action": "Reset to the base-case value for pre-fault rows.",
+      "severity": "medium",
+      "affected": {
+        "sims": [
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56
+        ]
+      }
+    },
+    {
+      "key": "post_gaps",
+      "title": "Empty cells after the fault",
+      "detail": "A handful of post-fault cells are blank: lsf_28 (1), shed_q_28 (1).",
+      "action": "Left missing; models fill with 0 (no shedding) and the physics check skips them.",
+      "severity": "low",
+      "affected": {
+        "lsf_28": 1,
+        "shed_q_28": 1
+      }
+    },
+    {
+      "key": "base_loads",
+      "title": "Base-case loads match the IEEE 39-bus reference",
+      "detail": "All 19 monitored base-case loads equal the standard New England case (MATPOWER case39)",
+      "action": "Validation check; no change.",
+      "severity": "low",
+      "affected": {
+        "mismatched": {}
+      }
+    },
+    {
+      "key": "lsf_range",
+      "title": "Load-shedding factors above 1",
+      "detail": "A shedding factor is the fraction of a bus's load to drop, so it must lie between 0 and 1. Bus 26 has 46 post-fault reading(s) above 1, up to 11.36. The shed MW was then computed from these factors, so the error carries through to the shedding totals. A slipped decimal point (9.82 for 0.982) is the likely cause.",
+      "action": "Flagged; excluded from the rule check, kept in the data.",
+      "severity": "high",
+      "affected": {
+        "26": 46
+      }
+    },
+    {
+      "key": "shed_exceeds_load",
+      "title": "Shedding larger than the load itself",
+      "detail": "A bus cannot shed more than it consumes. Bus 26 sheds up to 1578.4 MW against a 139 MW load (41 readings), a consequence of the factors above 1; Bus 12 sheds up to 92.9 MW against a 7.5 MW load (20 readings), and the values do not follow the bus's own factor, so the column was probably computed from another bus's load.",
+      "action": "Flagged; excluded from the rule check and from shedding totals in the app, kept in the data.",
+      "severity": "high",
+      "affected": {
+        "26": 41,
+        "12": 20
+      }
+    },
+    {
+      "key": "label_onset",
+      "title": "Labels switch on before the fault",
+      "detail": "In 9 simulations the area labels read UNSTABLE from t = 1.98 s, one step before any voltage moves. The labels describe the scenario, not a measured outcome, so pre-fault rows labelled UNSTABLE carry no signal for a model.",
+      "action": "Models use post-fault rows only (t >= 2.00 s).",
+      "severity": "medium",
+      "affected": {
+        "sims": [
+          3,
+          6,
+          7,
+          9,
+          10,
+          11,
+          12,
+          13,
+          16
+        ]
+      }
+    },
+    {
+      "key": "design_labels",
+      "title": "Labels that break the scenario pattern",
+      "detail": "Simulations follow a strict enumeration (base case, each single area, then every pair of areas). Sim 5 is labelled (3,) where the pattern implies (4,); Sim 30 is labelled (5,) where the pattern implies (2, 5); Sim 48 is labelled (8,) where the pattern implies (2, 8). These need confirming with the engineer who ran the simulations.",
+      "action": "Kept as recorded; models are also evaluated with these simulations excluded.",
+      "severity": "high",
+      "affected": {
+        "5": {
+          "recorded": [
+            3
+          ],
+          "design": [
+            4
+          ]
+        },
+        "30": {
+          "recorded": [
+            5
+          ],
+          "design": [
+            2,
+            5
+          ]
+        },
+        "48": {
+          "recorded": [
+            8
+          ],
+          "design": [
+            2,
+            8
+          ]
+        }
+      }
+    },
+    {
+      "key": "duplicate_files",
+      "title": "A simulation file is an exact copy of another",
+      "detail": "Power System 5.csv is byte-for-byte identical to Power System 4.csv. By the scenario pattern the copy should have held Area 4 unstable, so that scenario is missing from the study. Left in, the copy also leaks: a model tested on one twin has trained on the other.",
+      "action": "Copy dropped from modelling; the missing scenario is a question for the engineer.",
+      "severity": "high",
+      "affected": {
+        "5": 4
+      }
+    },
+    {
+      "key": "shared_voltages",
+      "title": "Different scenarios with identical voltage responses",
+      "detail": "Sims 47 and 51 are labelled with different unstable areas ((1, 7) vs (1, 8)) yet every post-fault bus voltage is identical; only a few shedding columns differ. One file probably received the other's voltage block. No model can tell them apart, so at least one label is unreachable.",
+      "action": "Kept; both flagged as suspect and excluded from the clean evaluation.",
+      "severity": "high",
+      "affected": {
+        "sims": [
+          47,
+          51
+        ]
+      }
+    },
+    {
+      "key": "sample_size",
+      "title": "56 scenarios, not 5,700 samples",
+      "detail": "5,712 rows, but before the fault every row is a copy of the steady state, and after it each scenario has only 6 distinct snapshots (2.00 s to 2.10 s). Splitting rows at random lets a model see near-copies of its test rows.",
+      "action": "All evaluation holds out whole scenarios (leave-one-scenario-out).",
+      "severity": "high",
+      "affected": {
+        "rows": 5712,
+        "scenarios": 56
+      }
+    }
+  ],
+  "suspect_sims": [
+    5,
+    30,
+    47,
+    48,
+    51
+  ],
+  "duplicate_sims": [
+    5
+  ],
+  "physics": {
+    "r2_lsf_x_load_all": 0.9326106958665306,
+    "r2_lsf_x_load": 0.9994869632568442,
+    "r2_from_voltage": 0.9533035008108371,
+    "implausible_cells": 67,
+    "median_gain": 0.7796504495233465,
+    "gains": {
+      "25": 0.8135816023715123,
+      "26": 0.8120661034480166,
+      "28": 0.8103315840356055,
+      "29": 0.8101590009487676,
+      "27": 0.7892432737847797,
+      "18": 0.7628600572667541,
+      "24": 0.7742945929882761,
+      "3": 0.7762218058862023,
+      "39": 0.811778512485202,
+      "4": 0.777822332305718,
+      "16": 0.7769643121268519,
+      "15": 0.7704474532037824,
+      "21": 0.7796504495233465,
+      "20": 0.7911257657703284,
+      "23": 0.7886745882147935,
+      "31": 0.8063750042295962,
+      "12": 0.7696584179965916,
+      "7": 0.7720692093302552,
+      "8": 0.7506583523450925
+    },
+    "per_bus": [
+      {
+        "bus": 25,
+        "r2_lsf_x_load": 0.9998406661877518,
+        "r2_lsf_x_load_plausible": 0.9998406661877518,
+        "r2_from_voltage": 0.9988408516378755,
+        "implausible_cells": 0
+      },
+      {
+        "bus": 26,
+        "r2_lsf_x_load": 0.6669556134695034,
+        "r2_lsf_x_load_plausible": 0.9998445399198694,
+        "r2_from_voltage": 0.9159320982338023,
+        "implausible_cells": 46
+      },
+      {
+        "bus": 28,
+        "r2_lsf_x_load": 0.9998554030060861,
+        "r2_lsf_x_load_plausible": 0.9998554030060861,
+        "r2_from_voltage": 0.9994095801550814,
+        "implausible_cells": 1
+      },
+      {
+        "bus": 29,
+        "r2_lsf_x_load": 0.9998666346516719,
+        "r2_lsf_x_load_plausible": 0.9998666346516719,
+        "r2_from_voltage": 0.9824085585462372,
+        "implausible_cells": 0
+      },
+      {
+        "bus": 27,
+        "r2_lsf_x_load": 0.9998538723265583,
+        "r2_lsf_x_load_plausible": 0.9998538723265583,
+        "r2_from_voltage": 0.9374272076257801,
+        "implausible_cells": 0
+      },
+      {
+        "bus": 18,
+        "r2_lsf_x_load": 0.9998598596654599,
+        "r2_lsf_x_load_plausible": 0.9998598596654599,
+        "r2_from_voltage": 0.29206453097982255,
+        "implausible_cells": 0
+      },
+      {
+        "bus": 24,
+        "r2_lsf_x_load": 0.9995260861724654,
+        "r2_lsf_x_load_plausible": 0.9995260861724654,
+        "r2_from_voltage": 0.8618673766650364,
+        "implausible_cells": 0
+      },
+      {
+        "bus": 3,
+        "r2_lsf_x_load": 0.999827514654474,
+        "r2_lsf_x_load_plausible": 0.999827514654474,
+        "r2_from_voltage": 0.8070281066923689,
+        "implausible_cells": 0
+      },
+      {
+        "bus": 39,
+        "r2_lsf_x_load": 0.9998894265707188,
+        "r2_lsf_x_load_plausible": 0.9998894265707188,
+        "r2_from_voltage": 0.9416476590988991,
+        "implausible_cells": 0
+      },
+      {
+        "bus": 4,
+        "r2_lsf_x_load": 0.9970413685102482,
+        "r2_lsf_x_load_plausible": 0.9970413685102482,
+        "r2_from_voltage": 0.930105143156322,
+        "implausible_cells": 0
+      },
+      {
+        "bus": 16,
+        "r2_lsf_x_load": 0.9998161526040061,
+        "r2_lsf_x_load_plausible": 0.9998161526040061,
+        "r2_from_voltage": 0.9318692229454757,
+        "implausible_cells": 0
+      },
+      {
+        "bus": 15,
+        "r2_lsf_x_load": 0.9997987516303211,
+        "r2_lsf_x_load_plausible": 0.9997987516303211,
+        "r2_from_voltage": 0.9341047447615757,
+        "implausible_cells": 0
+      },
+      {
+        "bus": 21,
+        "r2_lsf_x_load": 0.9998040196638126,
+        "r2_lsf_x_load_plausible": 0.9998040196638126,
+        "r2_from_voltage": 0.9390546554226432,
+        "implausible_cells": 0
+      },
+      {
+        "bus": 20,
+        "r2_lsf_x_load": 0.9998487372074082,
+        "r2_lsf_x_load_plausible": 0.9998487372074082,
+        "r2_from_voltage": 0.9396109393335019,
+        "implausible_cells": 0
+      },
+      {
+        "bus": 23,
+        "r2_lsf_x_load": 0.9998421368454343,
+        "r2_lsf_x_load_plausible": 0.9998421368454343,
+        "r2_from_voltage": 0.946719647632853,
+        "implausible_cells": 0
+      },
+      {
+        "bus": 31,
+        "r2_lsf_x_load": 0.9998779400125929,
+        "r2_lsf_x_load_plausible": 0.9998779400125929,
+        "r2_from_voltage": 0.9480297169584094,
+        "implausible_cells": 0
+      },
+      {
+        "bus": 12,
+        "r2_lsf_x_load": -0.02473611317041602,
+        "r2_lsf_x_load_plausible": 0.9998238024516534,
+        "r2_from_voltage": 0.9489925549541857,
+        "implausible_cells": 20
+      },
+      {
+        "bus": 7,
+        "r2_lsf_x_load": 0.9998275561863748,
+        "r2_lsf_x_load_plausible": 0.9998275561863748,
+        "r2_from_voltage": 0.7393357376179397,
+        "implausible_cells": 0
+      },
+      {
+        "bus": 8,
+        "r2_lsf_x_load": 0.9907961800971226,
+        "r2_lsf_x_load_plausible": 0.9907961800971226,
+        "r2_from_voltage": 0.7652074856165504,
+        "implausible_cells": 0
+      }
+    ]
+  }
+}
