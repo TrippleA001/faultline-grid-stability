@@ -91,11 +91,33 @@ models/                 metrics.json, out-of-sample predictions, final model
 
 ## Roadmap
 
-1. **Tier 1, this repo:** honest analysis of the PSS/E study.
-2. **Tier 2:** rebuild the case in the open-source [ANDES](https://github.com/CURENT/andes) simulator,
-   validate it against the PSS/E results, and generate thousands of fault scenarios.
-3. **Tier 3:** a graph neural network over the grid topology for stability assessment; reinforcement-learning
-   load shedding as a stretch goal.
+The project grows in three tiers inside this one repository, so the whole arc (audit, simulate, learn) reads
+as a single story and every tier is scored by the same evaluation harness.
+
+| Tier | Status | What it adds |
+|------|--------|--------------|
+| **1. Audit the PSS/E study** | Done | Cleaning and automated audit, the shedding rule as code, leave-one-scenario-out evaluation, this app |
+| **2. Simulate** | Planned | Rebuild the IEEE 39-bus case in the open-source [ANDES](https://github.com/CURENT/andes) simulator, validate it against the PSS/E base case, then generate thousands of fault scenarios (fault location, clearing time, loading) |
+| **3. Learn on the graph** | Planned | A graph neural network over the grid topology for early stability assessment, compared with Tier 1 models trained on 56 scenarios vs thousands |
+
+Reinforcement-learning load shedding is a stretch goal. It is a research codebase rather than a dashboard,
+so if it happens it will live in its own repository, linked from here.
+
+### Keeping the app light
+
+Simulation and deep learning stay offline; the deployed app only serves their results.
+
+| Stage | Runs on | Dependencies |
+|-------|---------|--------------|
+| Scenario generation (ANDES) | local machine, offline | `requirements-sim.txt` |
+| GNN training (PyTorch Geometric) | local machine or Colab | `requirements-gnn.txt` |
+| **App** | Streamlit Community Cloud | `requirements.txt` only: precomputed tables, and an exported model (ONNX) if live inference is needed |
+
+- **Data:** compact scenario summaries are committed; full simulation runs are published as a GitHub
+  Release asset with a download script, keeping the repository small.
+- **CI:** fast tests run on every push; simulator and training tests are marked `slow` and run on demand.
+- **App pages to add:** *Simulator vs PSS/E* (validation), *Graph Model*, and a Model Lab comparison of
+  56 vs thousands of training scenarios.
 
 ## Credits
 
